@@ -5,6 +5,7 @@ Scrape IRS 1040 instructions to extract:
 
 Outputs CSV files into data/<year>/ directory.
 """
+
 import csv
 import os
 import re
@@ -81,14 +82,16 @@ def parse_tax_table(soup: BeautifulSoup) -> list[dict]:
         except (ValueError, IndexError):
             continue
         try:
-            results.append({
-                "income_min": income_min,
-                "income_max": income_max,
-                "single": int(cells[2].replace(",", "")),
-                "married_filing_jointly": int(cells[3].replace(",", "")),
-                "married_filing_separately": int(cells[4].replace(",", "")),
-                "head_of_household": int(cells[5].replace(",", "")),
-            })
+            results.append(
+                {
+                    "income_min": income_min,
+                    "income_max": income_max,
+                    "single": int(cells[2].replace(",", "")),
+                    "married_filing_jointly": int(cells[3].replace(",", "")),
+                    "married_filing_separately": int(cells[4].replace(",", "")),
+                    "head_of_household": int(cells[5].replace(",", "")),
+                }
+            )
         except ValueError:
             continue
 
@@ -107,7 +110,9 @@ def parse_computation_worksheet(soup: BeautifulSoup) -> dict[str, list[dict]]:
     for section_label, filing_status in zip(WORKSHEET_SECTION_LABELS, FILING_STATUSES):
         # Find the text containing the section label
         elem = soup.find(
-            string=lambda s, sl=section_label: s and sl in s and "filing status" in s.lower()
+            string=lambda s, sl=section_label: s
+            and sl in s
+            and "filing status" in s.lower()
         )
         if not elem:
             raise ValueError(f"Could not find {section_label}")
@@ -134,7 +139,9 @@ def parse_computation_worksheet(soup: BeautifulSoup) -> dict[str, list[dict]]:
 
             # Parse subtraction amount: "$ 5,086.00" -> 5086.00
             sub_match = re.search(r"\$\s*([\d,]+\.\d+)", cells[4])
-            subtraction = float(sub_match.group(1).replace(",", "")) if sub_match else 0.0
+            subtraction = (
+                float(sub_match.group(1).replace(",", "")) if sub_match else 0.0
+            )
 
             # Parse income range
             income_min = None
@@ -152,12 +159,14 @@ def parse_computation_worksheet(soup: BeautifulSoup) -> dict[str, list[dict]]:
                 if over_match:
                     income_min = int(over_match.group(1).replace(",", ""))
 
-            brackets.append({
-                "income_min": income_min,
-                "income_max": income_max,
-                "rate": rate,
-                "subtraction_amount": subtraction,
-            })
+            brackets.append(
+                {
+                    "income_min": income_min,
+                    "income_max": income_max,
+                    "rate": rate,
+                    "subtraction_amount": subtraction,
+                }
+            )
 
         results[filing_status] = brackets
         print(f"  {filing_status}: {len(brackets)} brackets")
@@ -168,11 +177,17 @@ def parse_computation_worksheet(soup: BeautifulSoup) -> dict[str, list[dict]]:
 def write_tax_table_csv(data: list[dict], path: str):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=[
-            "income_min", "income_max",
-            "single", "married_filing_jointly",
-            "married_filing_separately", "head_of_household",
-        ])
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "income_min",
+                "income_max",
+                "single",
+                "married_filing_jointly",
+                "married_filing_separately",
+                "head_of_household",
+            ],
+        )
         writer.writeheader()
         writer.writerows(data)
     print(f"  Wrote {path}")
@@ -181,10 +196,16 @@ def write_tax_table_csv(data: list[dict], path: str):
 def write_computation_worksheet_csv(data: dict[str, list[dict]], path: str):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=[
-            "filing_status", "income_min", "income_max",
-            "rate", "subtraction_amount",
-        ])
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "filing_status",
+                "income_min",
+                "income_max",
+                "rate",
+                "subtraction_amount",
+            ],
+        )
         writer.writeheader()
         for filing_status, brackets in data.items():
             for bracket in brackets:
