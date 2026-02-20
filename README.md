@@ -54,6 +54,7 @@ assert_eq!(tax, 72_809);
 
 | Year | Variant | Source |
 |------|---------|--------|
+| 2023 | `TaxYear::Y2023` | PDF (prior year) |
 | 2024 | `TaxYear::Y2024` | PDF (prior year) |
 | 2025 | `TaxYear::Y2025` | HTML (current year) |
 
@@ -63,18 +64,12 @@ All tax data is scraped from the official IRS Form 1040 instructions. The curren
 
 ### Updating data
 
-To re-scrape the current year (HTML):
+The unified scraper automatically uses HTML for the current year and falls back to PDF for prior years:
 
 ```sh
-pip install beautifulsoup4 requests
-python scraper/scrape.py
-```
-
-To scrape prior years (PDF):
-
-```sh
-pip install pdfplumber requests
-python scraper/scrape_pdf.py
+pip install beautifulsoup4 pdfplumber requests
+python scraper/scrape.py            # scrape all years
+python scraper/scrape.py 2023       # scrape a single year
 ```
 
 ## License
