@@ -27,15 +27,15 @@ cargo add us-tax-brackets
 ```rust
 use us_tax_brackets::{compute_tax, FilingStatus, TaxYear};
 
-// Single filer, $75,000 taxable income (uses Tax Table)
-let tax = compute_tax(TaxYear::Y2025, FilingStatus::Single, 75_000).unwrap();
-assert_eq!(tax, 11_420);
+// 2023 single filer, $50,000 taxable income (uses Tax Table)
+let tax = compute_tax(TaxYear::Y2023, FilingStatus::Single, 50_000).unwrap();
+assert_eq!(tax, 6_313);
 
-// Married filing jointly, $200,000 taxable income (uses Worksheet)
-let tax = compute_tax(TaxYear::Y2025, FilingStatus::MarriedFilingJointly, 200_000).unwrap();
-assert_eq!(tax, 33_828);
+// 2024 married filing jointly, $200,000 taxable income (uses Worksheet)
+let tax = compute_tax(TaxYear::Y2024, FilingStatus::MarriedFilingJointly, 200_000).unwrap();
+assert_eq!(tax, 34_106);
 
-// Head of household, $300,000 taxable income
+// 2025 head of household, $300,000 taxable income
 let tax = compute_tax(TaxYear::Y2025, FilingStatus::HeadOfHousehold, 300_000).unwrap();
 assert_eq!(tax, 72_809);
 ```
