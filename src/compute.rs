@@ -95,7 +95,9 @@ fn compute_from_tax_table(
     let row = &table[idx];
     Ok(match status {
         FilingStatus::Single => row.single,
-        FilingStatus::MarriedFilingJointly => row.married_filing_jointly,
+        FilingStatus::MarriedFilingJointly | FilingStatus::QualifyingSurvivingSpouse => {
+            row.married_filing_jointly
+        }
         FilingStatus::MarriedFilingSeparately => row.married_filing_separately,
         FilingStatus::HeadOfHousehold => row.head_of_household,
     })
@@ -209,6 +211,32 @@ mod tests {
         // 1000000 × 0.37 − 42979.75 = 327020.25 -> 327020
         let tax = compute_tax(TaxYear::Y2025, FilingStatus::Single, 1_000_000).unwrap();
         assert_eq!(tax, 327_020);
+    }
+
+    // ----- Qualifying surviving spouse -----
+
+    #[test]
+    fn qualifying_surviving_spouse_matches_mfj_table() {
+        let mfj = compute_tax(TaxYear::Y2025, FilingStatus::MarriedFilingJointly, 75_000).unwrap();
+        let qss = compute_tax(
+            TaxYear::Y2025,
+            FilingStatus::QualifyingSurvivingSpouse,
+            75_000,
+        )
+        .unwrap();
+        assert_eq!(mfj, qss);
+    }
+
+    #[test]
+    fn qualifying_surviving_spouse_matches_mfj_worksheet() {
+        let mfj = compute_tax(TaxYear::Y2025, FilingStatus::MarriedFilingJointly, 200_000).unwrap();
+        let qss = compute_tax(
+            TaxYear::Y2025,
+            FilingStatus::QualifyingSurvivingSpouse,
+            200_000,
+        )
+        .unwrap();
+        assert_eq!(mfj, qss);
     }
 
     // ----- Cross-status comparison -----

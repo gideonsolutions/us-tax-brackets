@@ -112,7 +112,9 @@ pub(crate) fn parse_worksheet(csv: &str, status: FilingStatus) -> Vec<WorksheetB
 fn filing_status_csv_key(status: FilingStatus) -> &'static str {
     match status {
         FilingStatus::Single => "single",
-        FilingStatus::MarriedFilingJointly => "married_filing_jointly",
+        FilingStatus::MarriedFilingJointly | FilingStatus::QualifyingSurvivingSpouse => {
+            "married_filing_jointly"
+        }
         FilingStatus::MarriedFilingSeparately => "married_filing_separately",
         FilingStatus::HeadOfHousehold => "head_of_household",
     }
