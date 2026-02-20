@@ -11,7 +11,14 @@ use crate::types::FilingStatus;
 // Embedded CSV data
 // ---------------------------------------------------------------------------
 
-/// Tax Table CSV for tax year 2025 (income $0–$99,999 in $50 increments).
+/// Tax Table CSV for tax year 2024 (income $0–$99,999).
+pub(crate) const TAX_TABLE_CSV_2024: &str = include_str!("../data/2024/tax_table.csv");
+
+/// Tax Computation Worksheet CSV for tax year 2024 (income $100,000+).
+pub(crate) const WORKSHEET_CSV_2024: &str =
+    include_str!("../data/2024/tax_computation_worksheet.csv");
+
+/// Tax Table CSV for tax year 2025 (income $0–$99,999).
 pub(crate) const TAX_TABLE_CSV_2025: &str = include_str!("../data/2025/tax_table.csv");
 
 /// Tax Computation Worksheet CSV for tax year 2025 (income $100,000+).

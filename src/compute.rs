@@ -59,6 +59,7 @@ pub fn compute_tax(
     }
 
     let (table_csv, worksheet_csv) = match year {
+        TaxYear::Y2024 => (data::TAX_TABLE_CSV_2024, data::WORKSHEET_CSV_2024),
         TaxYear::Y2025 => (data::TAX_TABLE_CSV_2025, data::WORKSHEET_CSV_2025),
     };
 
@@ -262,5 +263,33 @@ mod tests {
         assert_eq!(mfj, 33_828); //   200000 × 0.22 − 10172
         assert_eq!(mfs, 41_063); //   same brackets as single at this level
         assert_eq!(hoh, 39_324); //   200000 × 0.32 − 24676
+    }
+
+    // ----- Tax year 2024 -----
+
+    #[test]
+    fn y2024_table_single_50k() {
+        let tax = compute_tax(TaxYear::Y2024, FilingStatus::Single, 50_000).unwrap();
+        assert_eq!(tax, 6_059);
+    }
+
+    #[test]
+    fn y2024_worksheet_single_150k() {
+        // 150000 × 0.24 − 6957.5 = 36000 − 6957.5 = 29042.5 -> 29043
+        let tax = compute_tax(TaxYear::Y2024, FilingStatus::Single, 150_000).unwrap();
+        assert_eq!(tax, 29_043);
+    }
+
+    #[test]
+    fn y2024_worksheet_mfj_200k() {
+        // 200000 × 0.22 − 9894 = 44000 − 9894 = 34106
+        let tax = compute_tax(TaxYear::Y2024, FilingStatus::MarriedFilingJointly, 200_000).unwrap();
+        assert_eq!(tax, 34_106);
+    }
+
+    #[test]
+    fn y2024_boundary_99999() {
+        let tax = compute_tax(TaxYear::Y2024, FilingStatus::Single, 99_999).unwrap();
+        assert_eq!(tax, 17_048);
     }
 }

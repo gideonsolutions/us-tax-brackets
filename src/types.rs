@@ -9,6 +9,8 @@ use std::fmt;
 /// the IRS publishes updated instructions each year.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TaxYear {
+    /// Tax year 2024 (filed in 2025).
+    Y2024,
     /// Tax year 2025 (filed in 2026).
     Y2025,
 }
@@ -16,6 +18,7 @@ pub enum TaxYear {
 impl fmt::Display for TaxYear {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            TaxYear::Y2024 => write!(f, "2024"),
             TaxYear::Y2025 => write!(f, "2025"),
         }
     }

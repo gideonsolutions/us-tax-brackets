@@ -52,21 +52,29 @@ assert_eq!(tax, 72_809);
 
 ## Supported tax years
 
-| Year | Variant |
-|------|---------|
-| 2025 | `TaxYear::Y2025` |
+| Year | Variant | Source |
+|------|---------|--------|
+| 2024 | `TaxYear::Y2024` | PDF (prior year) |
+| 2025 | `TaxYear::Y2025` | HTML (current year) |
 
 ## Data sources
 
-All tax data is scraped from the official [IRS Form 1040 instructions](https://www.irs.gov/instructions/i1040gi) using the BeautifulSoup-based scraper in `scraper/`. The CSV files are stored in `data/<year>/` and embedded into the binary at compile time via `include_str!`.
+All tax data is scraped from the official IRS Form 1040 instructions. The current year (2025) is scraped from the [HTML instructions page](https://www.irs.gov/instructions/i1040gi) using BeautifulSoup. Prior years are scraped from the [PDF instructions](https://www.irs.gov/pub/irs-prior/) using pdfplumber. The CSV files are stored in `data/<year>/` and embedded into the binary at compile time via `include_str!`.
 
 ### Updating data
 
-To re-scrape or add a new tax year:
+To re-scrape the current year (HTML):
 
 ```sh
 pip install beautifulsoup4 requests
 python scraper/scrape.py
+```
+
+To scrape prior years (PDF):
+
+```sh
+pip install pdfplumber requests
+python scraper/scrape_pdf.py
 ```
 
 ## License
