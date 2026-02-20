@@ -58,10 +58,7 @@ pub fn compute_tax(
         return Ok(0);
     }
 
-    let (table_csv, worksheet_csv) = match year {
-        TaxYear::Y2024 => (data::TAX_TABLE_CSV_2024, data::WORKSHEET_CSV_2024),
-        TaxYear::Y2025 => (data::TAX_TABLE_CSV_2025, data::WORKSHEET_CSV_2025),
-    };
+    let (table_csv, worksheet_csv) = data::csv_for_year(year);
 
     if taxable_income < 100_000 {
         compute_from_tax_table(table_csv, status, taxable_income)
@@ -137,102 +134,148 @@ mod tests {
 
     #[test]
     fn zero_income() {
-        let tax = compute_tax(TaxYear::Y2025, FilingStatus::Single, 0).unwrap();
-        assert_eq!(tax, 0);
+        assert_eq!(
+            compute_tax(TaxYear::Y2024, FilingStatus::Single, 0).unwrap(),
+            0
+        );
     }
 
     #[test]
     fn negative_income() {
-        let result = compute_tax(TaxYear::Y2025, FilingStatus::Single, -1);
-        assert_eq!(result, Err(TaxError::NegativeIncome));
+        assert_eq!(
+            compute_tax(TaxYear::Y2023, FilingStatus::Single, -1),
+            Err(TaxError::NegativeIncome)
+        );
     }
 
     // ----- Tax Table lookups (income < $100,000) -----
 
     #[test]
     fn low_income_single() {
-        // $10 taxable income falls in the $5–$15 row -> $1 tax
-        let tax = compute_tax(TaxYear::Y2025, FilingStatus::Single, 10).unwrap();
-        assert_eq!(tax, 1);
+        // $10 falls in the $5–$15 row -> $1 tax
+        assert_eq!(
+            compute_tax(TaxYear::Y2023, FilingStatus::Single, 10).unwrap(),
+            1
+        );
     }
 
     #[test]
     fn table_single_50k() {
-        let tax = compute_tax(TaxYear::Y2025, FilingStatus::Single, 50_000).unwrap();
-        assert_eq!(tax, 5_920);
+        // Inflation-adjusted brackets cause tax to decrease year over year
+        assert_eq!(
+            compute_tax(TaxYear::Y2023, FilingStatus::Single, 50_000).unwrap(),
+            6_313
+        );
+        assert_eq!(
+            compute_tax(TaxYear::Y2024, FilingStatus::Single, 50_000).unwrap(),
+            6_059
+        );
+        assert_eq!(
+            compute_tax(TaxYear::Y2025, FilingStatus::Single, 50_000).unwrap(),
+            5_920
+        );
     }
 
     #[test]
     fn table_married_jointly_75k() {
-        let tax = compute_tax(TaxYear::Y2025, FilingStatus::MarriedFilingJointly, 75_000).unwrap();
-        assert_eq!(tax, 8_526);
+        assert_eq!(
+            compute_tax(TaxYear::Y2024, FilingStatus::MarriedFilingJointly, 75_000).unwrap(),
+            8_539
+        );
+    }
+
+    #[test]
+    fn table_head_of_household_75k() {
+        assert_eq!(
+            compute_tax(TaxYear::Y2023, FilingStatus::HeadOfHousehold, 75_000).unwrap(),
+            10_207
+        );
     }
 
     // ----- Tax Table / Worksheet boundary -----
 
     #[test]
     fn boundary_99999_uses_table() {
-        // Last $50 bucket before $100k: row 99950–100000 -> single = 16909
-        let tax = compute_tax(TaxYear::Y2025, FilingStatus::Single, 99_999).unwrap();
-        assert_eq!(tax, 16_909);
+        assert_eq!(
+            compute_tax(TaxYear::Y2025, FilingStatus::Single, 99_999).unwrap(),
+            16_909
+        );
+        assert_eq!(
+            compute_tax(TaxYear::Y2023, FilingStatus::Single, 99_999).unwrap(),
+            17_394
+        );
     }
 
     #[test]
     fn boundary_100k_uses_worksheet() {
-        // "At least $100,000 but not over $103,350" -> 100000 × 0.22 − 5086 = 16914
-        let tax = compute_tax(TaxYear::Y2025, FilingStatus::Single, 100_000).unwrap();
-        assert_eq!(tax, 16_914);
+        // 2025: 100000 × 0.22 − 5086 = 16914
+        assert_eq!(
+            compute_tax(TaxYear::Y2025, FilingStatus::Single, 100_000).unwrap(),
+            16_914
+        );
+        // 2023: 100000 × 0.24 − 6600 = 17400 (no 22% bracket — it ends below $100k)
+        assert_eq!(
+            compute_tax(TaxYear::Y2023, FilingStatus::Single, 100_000).unwrap(),
+            17_400
+        );
     }
 
     // ----- Worksheet computations (income >= $100,000) -----
 
     #[test]
     fn worksheet_single_150k() {
-        // 150000 × 0.24 − 7153 = 28847
-        let tax = compute_tax(TaxYear::Y2025, FilingStatus::Single, 150_000).unwrap();
-        assert_eq!(tax, 28_847);
+        // 2024: 150000 × 0.24 − 6957.5 = 29042.5 → 29043
+        assert_eq!(
+            compute_tax(TaxYear::Y2024, FilingStatus::Single, 150_000).unwrap(),
+            29_043
+        );
     }
 
     #[test]
     fn worksheet_married_jointly_200k() {
-        // 200000 × 0.22 − 10172 = 33828
-        let tax = compute_tax(TaxYear::Y2025, FilingStatus::MarriedFilingJointly, 200_000).unwrap();
-        assert_eq!(tax, 33_828);
+        // 2023: 200000 × 0.24 − 13200 = 34800
+        assert_eq!(
+            compute_tax(TaxYear::Y2023, FilingStatus::MarriedFilingJointly, 200_000).unwrap(),
+            34_800
+        );
     }
 
     #[test]
     fn worksheet_head_of_household_300k() {
-        // 300000 × 0.35 − 32191 = 72809
-        let tax = compute_tax(TaxYear::Y2025, FilingStatus::HeadOfHousehold, 300_000).unwrap();
-        assert_eq!(tax, 72_809);
+        // 2024: 300000 × 0.35 − 31318 = 73682
+        assert_eq!(
+            compute_tax(TaxYear::Y2024, FilingStatus::HeadOfHousehold, 300_000).unwrap(),
+            73_682
+        );
     }
 
     #[test]
     fn worksheet_single_1m() {
-        // 1000000 × 0.37 − 42979.75 = 327020.25 -> 327020
-        let tax = compute_tax(TaxYear::Y2025, FilingStatus::Single, 1_000_000).unwrap();
-        assert_eq!(tax, 327_020);
+        // 2025: 1000000 × 0.37 − 42979.75 = 327020.25 → 327020
+        assert_eq!(
+            compute_tax(TaxYear::Y2025, FilingStatus::Single, 1_000_000).unwrap(),
+            327_020
+        );
     }
 
     // ----- Qualifying surviving spouse -----
 
     #[test]
-    fn qualifying_surviving_spouse_matches_mfj_table() {
-        let mfj = compute_tax(TaxYear::Y2025, FilingStatus::MarriedFilingJointly, 75_000).unwrap();
+    fn qualifying_surviving_spouse_matches_mfj() {
+        // Table lookup (2024)
+        let mfj = compute_tax(TaxYear::Y2024, FilingStatus::MarriedFilingJointly, 75_000).unwrap();
         let qss = compute_tax(
-            TaxYear::Y2025,
+            TaxYear::Y2024,
             FilingStatus::QualifyingSurvivingSpouse,
             75_000,
         )
         .unwrap();
         assert_eq!(mfj, qss);
-    }
 
-    #[test]
-    fn qualifying_surviving_spouse_matches_mfj_worksheet() {
-        let mfj = compute_tax(TaxYear::Y2025, FilingStatus::MarriedFilingJointly, 200_000).unwrap();
+        // Worksheet (2023)
+        let mfj = compute_tax(TaxYear::Y2023, FilingStatus::MarriedFilingJointly, 200_000).unwrap();
         let qss = compute_tax(
-            TaxYear::Y2025,
+            TaxYear::Y2023,
             FilingStatus::QualifyingSurvivingSpouse,
             200_000,
         )
@@ -263,33 +306,5 @@ mod tests {
         assert_eq!(mfj, 33_828); //   200000 × 0.22 − 10172
         assert_eq!(mfs, 41_063); //   same brackets as single at this level
         assert_eq!(hoh, 39_324); //   200000 × 0.32 − 24676
-    }
-
-    // ----- Tax year 2024 -----
-
-    #[test]
-    fn y2024_table_single_50k() {
-        let tax = compute_tax(TaxYear::Y2024, FilingStatus::Single, 50_000).unwrap();
-        assert_eq!(tax, 6_059);
-    }
-
-    #[test]
-    fn y2024_worksheet_single_150k() {
-        // 150000 × 0.24 − 6957.5 = 36000 − 6957.5 = 29042.5 -> 29043
-        let tax = compute_tax(TaxYear::Y2024, FilingStatus::Single, 150_000).unwrap();
-        assert_eq!(tax, 29_043);
-    }
-
-    #[test]
-    fn y2024_worksheet_mfj_200k() {
-        // 200000 × 0.22 − 9894 = 44000 − 9894 = 34106
-        let tax = compute_tax(TaxYear::Y2024, FilingStatus::MarriedFilingJointly, 200_000).unwrap();
-        assert_eq!(tax, 34_106);
-    }
-
-    #[test]
-    fn y2024_boundary_99999() {
-        let tax = compute_tax(TaxYear::Y2024, FilingStatus::Single, 99_999).unwrap();
-        assert_eq!(tax, 17_048);
     }
 }

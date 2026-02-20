@@ -11,19 +11,33 @@ use crate::types::FilingStatus;
 // Embedded CSV data
 // ---------------------------------------------------------------------------
 
+/// Tax Table CSV for tax year 2023 (income $0–$99,999).
+const TAX_TABLE_CSV_2023: &str = include_str!("../data/2023/tax_table.csv");
+
+/// Tax Computation Worksheet CSV for tax year 2023 (income $100,000+).
+const WORKSHEET_CSV_2023: &str = include_str!("../data/2023/tax_computation_worksheet.csv");
+
 /// Tax Table CSV for tax year 2024 (income $0–$99,999).
-pub(crate) const TAX_TABLE_CSV_2024: &str = include_str!("../data/2024/tax_table.csv");
+const TAX_TABLE_CSV_2024: &str = include_str!("../data/2024/tax_table.csv");
 
 /// Tax Computation Worksheet CSV for tax year 2024 (income $100,000+).
-pub(crate) const WORKSHEET_CSV_2024: &str =
-    include_str!("../data/2024/tax_computation_worksheet.csv");
+const WORKSHEET_CSV_2024: &str = include_str!("../data/2024/tax_computation_worksheet.csv");
 
 /// Tax Table CSV for tax year 2025 (income $0–$99,999).
-pub(crate) const TAX_TABLE_CSV_2025: &str = include_str!("../data/2025/tax_table.csv");
+const TAX_TABLE_CSV_2025: &str = include_str!("../data/2025/tax_table.csv");
 
 /// Tax Computation Worksheet CSV for tax year 2025 (income $100,000+).
-pub(crate) const WORKSHEET_CSV_2025: &str =
-    include_str!("../data/2025/tax_computation_worksheet.csv");
+const WORKSHEET_CSV_2025: &str = include_str!("../data/2025/tax_computation_worksheet.csv");
+
+/// Return the embedded (Tax Table CSV, Worksheet CSV) for the given tax year.
+pub(crate) fn csv_for_year(year: crate::types::TaxYear) -> (&'static str, &'static str) {
+    use crate::types::TaxYear;
+    match year {
+        TaxYear::Y2023 => (TAX_TABLE_CSV_2023, WORKSHEET_CSV_2023),
+        TaxYear::Y2024 => (TAX_TABLE_CSV_2024, WORKSHEET_CSV_2024),
+        TaxYear::Y2025 => (TAX_TABLE_CSV_2025, WORKSHEET_CSV_2025),
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Internal data structures
