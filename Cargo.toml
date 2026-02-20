@@ -4,7 +4,8 @@ version = "0.3.0"
 edition = "2024"
 license = "Apache-2.0"
 description = "Compute U.S. federal income tax from IRS tax tables and computation worksheets"
-repository = "https://github.com/iajoiner/us-tax-brackets"
+readme = "README.md"
+repository = "https://github.com/gideonsolutions/us-tax-brackets"
 keywords = ["tax", "irs", "federal", "income-tax", "brackets"]
 categories = ["finance"]
 
